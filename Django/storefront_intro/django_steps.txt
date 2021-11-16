@@ -1,0 +1,245 @@
+
+1. Create Virtual Env. 
+    -Install Python, Django 
+
+2. Create Directory for project. 
+
+3. In Project Directory Start New Django Project
+    - 'django-admin startproject project_name .'
+    **** the '.' tells django to not create additional
+    **** directory for project since we did that in SII. 
+
+4. Type 'django-admin' in conda prompt to see django commands
+
+5. 'django-admin runserver' -> Requested Setting Debug, but settings not configured. 
+    -Important to start to run 'python manage.py' as we have a project now. 
+
+6. 'python manage.py runserver' #You can include port# if you wish 
+     -Your Django App now have a development server runnin on local host 
+     -Typical local host is http://127.0.01:8000/ 
+
+
+
+Creating First App:
+
+    -Each Django project is a collection of Apps. 
+    -Every django app has the same directory structure: 
+│   admin.py    # How admin interface for app will look
+│   apps.py     # Configure App
+│   models.py   # Define Model Classes for app, used to pull out data from database and present it to user
+│   tests.py    # Where Unit Tests are defined
+│   
+│   views.py    # Request handler
+│   __init__.py # Initializes app 
+│
+├───migrations
+│   │   __init__.py
+│   │
+│   └───__pycache__
+│           __init__.cpython-39.pyc
+
+
+
+7. In project folder open settings.py 
+    -Module contains a bunch of different settings. 
+    - INSTALLED_APPS = [
+    'django.contrib.admin', # Gives admin interface for managing Data
+    'django.contrib.auth', # Authenticates users 
+    'django.contrib.contenttypes',
+    'django.contrib.sessions', # Legacy, temporary memory on server for managing user data. Today we use APIs for Data, so we don't use this. 
+    'django.contrib.messages', # Used to Display one-time messages to user.
+    'django.contrib.staticfiles', # Serves static files (Images, CSS etc.) 
+    ]
+
+8. Create a new app for django project
+    (terminal cd django project dir)
+    - python manage.py startapp app_name
+
+9. Everytime you create a new app, register it in settings.py module under INSTALLED_APPS
+
+10. views.py (Where we define views/view functions 
+    -HTTP is a request <--> response protocol; every data exchange involves request/response. 
+    -view functions == request -> response 
+        I. Request handler, some frameworks call it an action, in django it's called a view. 
+        II. Usually (in other frameworks) views are something the user will see, this is not the case for Django, Django calls those templates. 
+
+11. Creating View Function (EXAMPLE): 
+    -------- (views.py) --------- 
+   from django.shortcuts import render 
+   from django.http import HttpResponse
+
+   def say_hello(request): 
+       return HttpResponse('Hello World') 
+
+12. Mapping Created View function to URL
+     always end a route with a '/' 
+     1. In app directory create a urls.py file: 
+
+     -------- (urls.py) --------
+     from django.urls import path
+     from . import views 
+     
+     # URLConf Module
+     urlpatterns = [
+     path('playground/hello', views.say_hello) # arg1 = route/url, arg2 = views function ref. *do not call views function*
+     ]
+
+13. Import URLConf into main URL conf in project: 
+     -In main project directory open urls.py module 
+     -------- (urls.py) --------
+     from django.contrib imnport admin 
+     from django.urls import path, include 
+
+     urlpatterns = [
+     path('admin/', admin.site.urls), 
+     path('playground/', include('playground.urls')), # all request that contain url/playground/ should be handled by 'playground.urls'
+     ]
+
+******** Now you can delete 'playground' portion in the url.py file in playground directory bc it is already referenced in the main URLConf.
+
+
+
+----------------- Using Templates -----------------
+
+14. Create a new directory in playground directory call it 'templates' 
+    -Add a new file called 'hello.html'
+    -------- (hello.html) -------- 
+    <h1>Hello World</h1>
+
+
+15. Change views function and use render 
+    -------- (views.py) --------- 
+   from django.shortcuts import render 
+   from django.http import HttpResponse
+
+   def say_hello(request): 
+       return render(request, 'hello.html') 
+
+***** python manage.py runserver, then submit playgroud/hello request and see if you are greeted with response of rendered hello.html *****
+    
+16. Including a dictionary in the views function, editing html page to utilize dictionary. 
+
+ -------- (views.py) --------- 
+   from django.shortcuts import render 
+   from django.http import HttpResponse
+
+   def say_hello(request): 
+       return render(request, 'hello.html', {'name': 'Daniel'}) 
+
+***********************************************************************
+-------- (hello.html) -------- 
+    <h1>Hello {{name}}</h1>
+
+***********************************************************************
+You should now see your 'Hello Daniel' when you submit the localhost/playground/hello request.
+
+*********************************************************************** 
+17. Conditionals in html file 
+
+-------- (hello.html) -------- 
+    {% if name %}
+    <h1>Hello {{name}}</h1>
+    {% else%}
+    <h1>Hello World</h1>
+    {% endif %}
+
+
+NOTE: These days we rarely use Django to return templates, rather we use Django to create APIs that return Data not HTML Content. 
+
+
+---------------- Using Django Debug Toolbar ------------------ 
+
+18. Install Django Debug Toolbar
+    - Add 'debug_toolbar' app to settings.py file
+
+   ---------- (urls.py [main]) -----------
+    - Import debug_toolbar
+    - add 'path('__debug__/', include(debug_toolbar.urls))'
+ 
+   ---------- (settings.py) -------------
+   -to middleware add 'debug_toolbar.middleware.DebugToolbarMiddleware'
+   - add ip adress in Internal IPs setting:
+    ****************************************
+   INTERNAL_IPS = [
+    # ...
+    '127.0.0.1',
+    # ...
+] 
+
+    ****************************************
+
+19. Make sure you have a proper HTML format in your HTML file: 
+------------ (hello.html) -------------
+
+<html>
+    <body>
+      {% if name %}
+      <h1>Hello {{name}}</h1>
+      {% else%}
+      <h1>Hello World</h1>
+      {% endif %}
+    </body>
+<html> 
+
+
+*********************************************************************************************
+
+Building a Data Model 
+
+*********************************************************************************************
+
+1. Figuring out pieces in Data we want to store: 
+    
+    Product:        [title, description, price, inventory] *simple* #Single Item that can belong to one collection
+    Collection:     [Title, products, featured_product] *Category of items, Multiple Categories/Collections
+    Cart:           [created_at] 
+    CartItem:       [Quantiy] #Association Class
+    Customer:       [Name, Email]
+    Order:          [Placed_at] 
+    Order_Item:     [Quantity]  
+    Tag             [Label] 
+
+    Relationships: 1-1, 1-many, many-many. 
+ 
+
+
+***********************************************************************************************
+
+Organizing Models in Apps 
+
+***********************************************************************************************
+# Django projects have 1 or more apps. An app provides some type of functionality to your proj-
+ect. After a while, you will add more and more apps to a project. You can reuse Apps for diffe-
+rent projects so you don't have to rewrite apps. As projects get more and more complex it gets
+bloated with to many models/views -> Monolith (Large heavy stone). When designing an app we wa- 
+nt to follow unix philosophy. Each app should do one thing and do it well.
+
+Break down the app above into 4 smaller projects/apps: 
+
+***POOR WAY TO BREAK DOWN PROJECT*** 
+
+Products: Products, Collection, Tag
+Customers: Customer
+Carts: Cart, CartItem
+Orders: Order, OrderItem
+
+The above should be bundled together. But you should avoid Monolith Design....... but how!?!?!?!? 
+APP BREAKDOWN: 
+
+STORE = [Product, Collection, Customer, Cart, CartItem, Order, OrderItem]
+TAGS =  [Tag, TaggedItem]
+
+*************************************************************************************************
+
+Applying Above Model and Creating Apps 
+
+************************************************************************************************* 
+
+
+1. Create store and Tags apps
+
+
+
+
+
+
